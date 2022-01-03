@@ -1,13 +1,19 @@
 export class Frame{
-    handler:string; // 处理者
+    handler:string; // 接下来的处理者
+    preHandler:string; // 上一次的处理者
     src:string;
     dst:string;
     dataLen:number;
     checkcode:number[] = [0x00,0x00];
     checkData:number[] = [];
 
+    loc:number[] = [0,0];
+    renderRate:number[] = [0,0];
+    renderStep:number = -1;
 
-    constructor( handler:string="", src:string="", dst:string="", randNum:number[]=[0x00,0x00],dataLen:number=0){
+
+    constructor( preHandler:string="",handler:string="", src:string="", dst:string="", randNum:number[]=[0x00,0x00],dataLen:number=0){
+        this.preHandler = preHandler;
         this.handler = handler;
         this.src = src;
         this.dst = dst;

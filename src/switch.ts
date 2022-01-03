@@ -45,6 +45,8 @@ export class Switch{
 
         if(typeof portID !== "undefined" ){
             event.time = event.time + this.forwardTime;
+            event.frame.preHandler = this.deviceName;
+            event.frame.renderStep = -1; // 重新开始渲染
             event.frame.handler = this.peerIDs[portID];
             this.emitter.emit("EventBusRecv",event);
         }

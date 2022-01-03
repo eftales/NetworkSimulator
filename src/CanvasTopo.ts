@@ -5,7 +5,7 @@ export class CanvasTopo{
     sim:Simulator;
     canvas:HTMLCanvasElement;
     ctx:CanvasRenderingContext2D;
-    devicePlotSize=[100,100];
+    static devicePlotSize=[100,100];
 
 
     curDeviceType:deviceTypes = deviceTypes.typeSwitch;
@@ -16,7 +16,7 @@ export class CanvasTopo{
 
     constructor(sim:Simulator){
         this.sim = sim; // 为 Simulator 添加节点
-        this.canvas = <HTMLCanvasElement> document.getElementById('canvas'); // typecast
+        this.canvas = <HTMLCanvasElement> document.getElementById('topo'); // typecast
         this.ctx = this.canvas.getContext('2d')!; // ! 排除 null 和 undefined
         
         this.canvas.addEventListener('mousedown', this.mousedownHandler.bind(this))
@@ -96,9 +96,9 @@ export class CanvasTopo{
         // console.log("======X,Y===",X,Y)
         // 算法参考 https://www.cnblogs.com/fangsmile/p/9306510.html
         for(let i=0;i<this.sim.swLists.length;++i){
-            let A = this.sim.swLists[i].loc, B = [A[0]+this.devicePlotSize[0],A[1]],
-                 C = [A[0]+this.devicePlotSize[0],A[1]+this.devicePlotSize[1]],
-                 D = [A[0],A[1]+this.devicePlotSize[1]],
+            let A = this.sim.swLists[i].loc, B = [A[0]+CanvasTopo.devicePlotSize[0],A[1]],
+                 C = [A[0]+CanvasTopo.devicePlotSize[0],A[1]+CanvasTopo.devicePlotSize[1]],
+                 D = [A[0],A[1]+CanvasTopo.devicePlotSize[1]],
                  E = [X,Y];
             let AB = this.getVector(A,B),AE=this.getVector(A,E),
                 CD=this.getVector(C,D),CE=this.getVector(C,E);
@@ -116,9 +116,9 @@ export class CanvasTopo{
         for(let i=0;i<this.sim.hostLists.length;++i){
             // console.log(this.sim.hostLists[i]);
 
-            let A = this.sim.hostLists[i].loc, B = [A[0]+this.devicePlotSize[0],A[1]],
-                 C = [A[0]+this.devicePlotSize[0],A[1]+this.devicePlotSize[1]],
-                 D = [A[0],A[1]+this.devicePlotSize[1]],
+            let A = this.sim.hostLists[i].loc, B = [A[0]+CanvasTopo.devicePlotSize[0],A[1]],
+                 C = [A[0]+CanvasTopo.devicePlotSize[0],A[1]+CanvasTopo.devicePlotSize[1]],
+                 D = [A[0],A[1]+CanvasTopo.devicePlotSize[1]],
                  E = [X,Y];
             let AB = this.getVector(A,B),AE=this.getVector(A,E),
                 CD=this.getVector(C,D),CE=this.getVector(C,E);
@@ -135,12 +135,23 @@ export class CanvasTopo{
         return [];
     }
 
+
+    public getCenterPoint(deviceID:string){
+        let deviceObj = this.sim.getElement(deviceID);
+        return [deviceObj.loc[0]+CanvasTopo.devicePlotSize[0]/2,deviceObj.loc[1]+CanvasTopo.devicePlotSize[1]/2];
+    }
+
     public makeLink(endX:number,endY:number){
 
         let deviceMSG1 =  this.inOneRect(this.beginX,this.beginY),deviceMSG2 =  this.inOneRect(endX,endY);
         if(deviceMSG1.length !== 0 && deviceMSG2.length !== 0){
+            // 为了避免维护线的信息，线的开始和结束一定是代表设备的方框的中心点
+
+            [this.beginX, this.beginY] = this.getCenterPoint(deviceMSG1[1]);
             this.ctx.beginPath();
             this.ctx.moveTo(this.beginX, this.beginY);
+
+            [endX, endY] = this.getCenterPoint(deviceMSG2[1]);
             this.ctx.lineTo(endX, endY);
             this.ctx.closePath();
             this.ctx.stroke();
@@ -169,9 +180,9 @@ export class CanvasTopo{
                 break;
         }
 
-        this.ctx.strokeRect(X, Y, this.devicePlotSize[0], this.devicePlotSize[1]);
+        this.ctx.strokeRect(X, Y, CanvasTopo.devicePlotSize[0], CanvasTopo.devicePlotSize[1]);
         this.ctx.font="30px Verdana";
-        this.ctx.fillText(deviceName,X+this.devicePlotSize[0]/5,Y+this.devicePlotSize[1]/2);
+        this.ctx.fillText(deviceName,X+CanvasTopo.devicePlotSize[0]/5,Y+CanvasTopo.devicePlotSize[1]/2);
     }
 
 

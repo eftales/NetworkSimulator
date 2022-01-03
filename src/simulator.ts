@@ -5,6 +5,7 @@ import {EventEmitter} from "events";
 import { EventBus } from './eventbus';
 import { CanvasTopo } from './CanvasTopo';
 
+
 export enum deviceTypes {
     typeSwitch = "sw",
     typeHost = "h",
@@ -35,8 +36,8 @@ export class Simulator{
         this.forwardTime = forwardTime;
         this.arrivalMiu = arrivalMiu;
         this.dataLenMiu = dataLenMiu; 
-        this.canvasTopo = new CanvasTopo(this);   
-        
+        this.canvasTopo = new CanvasTopo(this);         
+
     };
 
     public inspect(){
@@ -51,7 +52,7 @@ export class Simulator{
     };
 
     public startSim(){
-        this.eventBus = new EventBus(this.emitter,deviceTypes.typeEventBus,this.set,this.forwardTime);
+        this.eventBus = new EventBus(this,this.emitter,deviceTypes.typeEventBus,this.set,this.forwardTime);
 
         console.log("[INFO] "+Date.now()+" "+"Simulator start.");
         this.genFlowTables();
@@ -124,7 +125,7 @@ export class Simulator{
         return -1;
     }
 
-    private getElement(deviceID:string){
+    public getElement(deviceID:string){
         let split = deviceID.search("[0-9]");
         let type = deviceID.substring(0,split);
         let index = Number(deviceID.substring(split,deviceID.length));

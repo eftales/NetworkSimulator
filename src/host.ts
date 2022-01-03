@@ -69,7 +69,7 @@ export class Host{
 
         // 再crc
         let dataLen = jStat.exponential.sample(1/this.dataLenMiu);
-        let frame = new Frame(this.peerID,this.deviceName,this.genDst(),this.randNum,dataLen);
+        let frame = new Frame(this.deviceName ,this.peerID,this.deviceName,this.genDst(),this.randNum,dataLen);
         let event:Event = new Event(Date.now(),frame);
         // console.log(event);
         this.emitter.emit("EventBusRecv",event); // 因为 emit 是阻塞的，所以用 EventBus 将终端发送和交换机转发解耦
@@ -87,8 +87,12 @@ export class Host{
             return this.dstMACs[0];
         }
         else{
-            // 在其他的里面随便选一个
+            // 在其他的里面随便选一个，当然不能是自己
             let index:number = Math.round(Math.random()*(this.dstMACs.length-2))+1;
+            if(this.deviceName===this.dstMACs[index]){
+                index = (index+1)%this.dstMACs.length;
+            }
+
             return this.dstMACs[index];
         }
     }
