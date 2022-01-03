@@ -19,12 +19,16 @@ export class Host{
     sendedDataLen:number = 0;
     sendedDataCount:number = 0;
 
+    loc:number[] = [0,0];
 
 
-    constructor(deviceName:string, dstMACs:string[],emitter:EventEmitter,arrivalMiu?:number,dataLenMiu?:number){
+
+
+    constructor(deviceName:string, dstMACs:string[],emitter:EventEmitter,loc:number[],arrivalMiu?:number,dataLenMiu?:number){
         this.deviceName = deviceName;
         this.emitter = emitter;
         this.dstMACs = [...dstMACs]; 
+        this.loc = [...loc];
 
         if (typeof arrivalMiu !== "undefined"){
             this.arrivalMiu = arrivalMiu;
@@ -37,6 +41,7 @@ export class Host{
         emitter.on(deviceName+"recv",this.recvFlow.bind(this));
 
     }
+
 
     public connect2(peerID_:string){
         if(this.peerID.length!=0){

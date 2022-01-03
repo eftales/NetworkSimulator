@@ -9,9 +9,13 @@ export class Switch{
     forwardTable:Map<string,number> = new Map<string,number>();
     forwardTime:number=5; // 转发耗时默认为 5 ms
 
-    constructor(deviceName:string, emitter:EventEmitter, forwardTime?:number){
+    loc:number[] = [0,0];
+
+    constructor(deviceName:string, emitter:EventEmitter, loc:number[],forwardTime?:number){
         this.deviceName = deviceName;
         this.emitter = emitter;
+        this.loc = [...loc];
+
         if (typeof forwardTime !== "undefined"){
             this.forwardTime = forwardTime;
         }

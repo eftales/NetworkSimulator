@@ -3,48 +3,45 @@ import {Host} from './host';
 
 import {EventEmitter} from "events";
 import { EventBus } from './eventbus';
-
+import { CanvasTopo } from './CanvasTopo';
 
 export enum deviceTypes {
     typeSwitch = "sw",
     typeHost = "h",
     typeEventBus = "EventBus",
+    typeLine = "line",
 }
 
 export class Simulator{
     emitter = new EventEmitter();
+    canvasTopo:CanvasTopo;
     swLists:Switch[] = [];
     hostLists:Host[] = [];
-    eventBus:EventBus;
+    set = new Set<string>();
+    eventBus:any = null; 
+
+    swNum:number = 0;
+    hostNum:number = 0;
+
+
+    forwardTime:number; // 转发耗时默认为 5 ms
+    arrivalMiu:number; // 1/指数分布参数，等价于到达时间间隔的期望
+    dataLenMiu:number; // 1/指数分布参数，等价于平均包长度
+    dstMAcs:string[] = [];
 
 
     constructor(swNum:number, forwardTime:number=5, hostNum:number,arrivalMiu:number=1000,dataLenMiu:number=100){
-        let set = new Set<string>();
-        // 创建设备
-        for(let i=0;i<swNum;++i){
-            let deviceName = deviceTypes.typeSwitch + i;
-            this.swLists.push(new Switch(deviceName, this.emitter,forwardTime));
-            set.add(deviceName);
-        }
-
-        let dstMacs:string[] = [];
-        for(let i=0;i<hostNum;++i){
-            let deviceName = deviceTypes.typeHost + i;
-            dstMacs.push(deviceName);
-        }
-
-        for(let i=0;i<hostNum;++i){
-            let deviceName = deviceTypes.typeHost + i;
-            this.hostLists.push(new Host(deviceName, dstMacs, this.emitter,arrivalMiu,dataLenMiu));
-            set.add(deviceName);
-        }
-
-        this.eventBus = new EventBus(this.emitter,deviceTypes.typeEventBus,set,forwardTime);
+        document.getElementById("startButton")!.onclick = this.startSim.bind(this);
+        this.forwardTime = forwardTime;
+        this.arrivalMiu = arrivalMiu;
+        this.dataLenMiu = dataLenMiu; 
+        this.canvasTopo = new CanvasTopo(this);   
         
     };
 
     public inspect(){
         // 检查元素
+        console.log("[DEBUG] inspect simulator");
         for(let i=0;i<this.swLists.length;++i){
             console.log(this.swLists[i]);
         }
@@ -53,17 +50,79 @@ export class Simulator{
         }
     };
 
+    public startSim(){
+        this.eventBus = new EventBus(this.emitter,deviceTypes.typeEventBus,this.set,this.forwardTime);
 
-    public link(deviceID1:string, port1:number, deviceID2:string, port2:number){
+        console.log("[INFO] "+Date.now()+" "+"Simulator start.");
+        this.genFlowTables();
+
+        this.inspect();
+
+        this.hostLists.forEach(host => {
+            host.dstMACs = [...this.dstMAcs];
+            host.sendFlow();
+        });
+
+
+
+    }
+
+    public addHost(X:number,Y:number){
+        let deviceName = deviceTypes.typeHost + this.hostNum;
+        this.hostLists.push(new Host(deviceName, [], this.emitter,[X,Y],this.arrivalMiu,this.dataLenMiu)); // 之后需要补充 dstMacs
+        this.set.add(deviceName);
+        this.dstMAcs.push(deviceName);
+    }
+
+    public addSwitch(X:number,Y:number){
+        let deviceName = deviceTypes.typeSwitch + this.swNum;
+        this.swLists.push(new Switch(deviceName, this.emitter,[X,Y],this.forwardTime));
+        this.set.add(deviceName);
+    }
+
+
+    public link(deviceID1:string, deviceID2:string){
         let device1:Switch|Host,device2:Switch|Host;
 
         device1 = this.getElement(deviceID1);
         device2 = this.getElement(deviceID2);
 
-        device1.connect2(deviceID2, port1);
-        device2.connect2(deviceID1, port2);
+
+        let port1 = this.getUnusePort(device1), port2 = this.getUnusePort(device2);
+
+        // console.log(port1,port2);
+        // console.log(device1,device2);
+
+
+        if(port1 >= 0 && port2 >= 0){
+            device1.connect2(deviceID2, port1);
+            device2.connect2(deviceID1, port2);
+        }
+        else{
+            console.log(this);
+            throw("无效的 port");
+        }
+
+
 
     };
+
+    private getUnusePort(device:Switch|Host){
+        if(device instanceof Switch){
+            for(let i = 0;i<device.peerIDs.length;++i){
+                if (device.peerIDs[i].length === 0){
+                    return i;
+                }
+            }
+        }
+        else{
+            if(device.peerID.length === 0){
+                return 0;
+            }
+        }
+
+        return -1;
+    }
 
     private getElement(deviceID:string){
         let split = deviceID.search("[0-9]");
@@ -94,17 +153,18 @@ export class Simulator{
     };
 
 
-    private dfsTopologyDiscovery(device:Switch,prePort:number):string[]{
+    private dfsTopologyDiscovery(device:Switch,visited:Set<string>):string[]{
         let hostIDs:string[] = [];
+        visited.add(device.deviceName);
         for(let i=0;i<device.peerIDs.length;++i){
-            if(device.peerIDs[i].length !== 0 && i!==prePort){
+            if(device.peerIDs[i].length !== 0 && !visited.has(device.peerIDs[i])){
                 let peer:Switch|Host = this.getElement(device.peerIDs[i]);
                 if(peer instanceof Host){
                     device.forwardTable.set(peer.deviceName,i);
                     hostIDs.push(peer.deviceName);
                 }
                 else{
-                    this.dfsTopologyDiscovery(peer,i).forEach(hostID => {
+                    this.dfsTopologyDiscovery(peer,visited).forEach(hostID => {
                         device.forwardTable.set(hostID,i);
                         hostIDs.push(hostID);
                         
@@ -119,7 +179,8 @@ export class Simulator{
 
     public genFlowTables(){
         for(let i=0;i<this.swLists.length;++i){
-            this.dfsTopologyDiscovery(this.swLists[i],-1);
+            let visited = new Set<string>();
+            this.dfsTopologyDiscovery(this.swLists[i],visited);
         }
     }
 

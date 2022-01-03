@@ -63,7 +63,7 @@ export class EventBus{
         
             }
             else{
-                throw("[ERROR] "+this.deviceName+" handler mis.");
+                throw("[ERROR] "+this.deviceName+" handler mis. "+event.frame.handler);
             }
         }
         else{
