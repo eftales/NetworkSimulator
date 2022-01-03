@@ -2,27 +2,29 @@ import {Switch} from './switch';
 import {Host} from './host';
 
 import {EventEmitter} from "events";
+import { EventBus } from './eventbus';
 
 
-enum deviceTypes {
+export enum deviceTypes {
     typeSwitch = "sw",
     typeHost = "h",
-
+    typeEventBus = "EventBus",
 }
 
 export class Simulator{
     emitter = new EventEmitter();
     swLists:Switch[] = [];
     hostLists:Host[] = [];
+    eventBus:EventBus;
 
 
-
-
-    constructor(swNum:number,hostNum:number){
+    constructor(swNum:number, forwardTime:number=5, hostNum:number,arrivalMiu:number=1000,dataLenMiu:number=100){
+        let set = new Set<string>();
         // 创建设备
         for(let i=0;i<swNum;++i){
             let deviceName = deviceTypes.typeSwitch + i;
-            this.swLists.push(new Switch(deviceName, this.emitter));
+            this.swLists.push(new Switch(deviceName, this.emitter,forwardTime));
+            set.add(deviceName);
         }
 
         let dstMacs:string[] = [];
@@ -33,8 +35,11 @@ export class Simulator{
 
         for(let i=0;i<hostNum;++i){
             let deviceName = deviceTypes.typeHost + i;
-            this.hostLists.push(new Host(deviceName, dstMacs, this.emitter));
+            this.hostLists.push(new Host(deviceName, dstMacs, this.emitter,arrivalMiu,dataLenMiu));
+            set.add(deviceName);
         }
+
+        this.eventBus = new EventBus(this.emitter,deviceTypes.typeEventBus,set,forwardTime);
         
     };
 

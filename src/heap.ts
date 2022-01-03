@@ -1,12 +1,14 @@
-class MaxHeap<T> {
+class MinHeap<T> {
     private data: Array<T> = [];
-    constructor(arr?: T[]) {
+    private compair:(a:T,b:T)=>{}; // 小于为 true，大于为 false
+    constructor(compair:(a:T,b:T)=>{},arr?: T[]) {
       if (arr?.length) {
         this.data = arr;
         for (let i = this.parent(this.size); i >= 0; i--) {
           this.siftDown(i);
         }
       }
+      this.compair = compair;
     }
     public get size(): number {
       return this.data.length;
@@ -39,7 +41,7 @@ class MaxHeap<T> {
       return 2 * index + 2;
     }
     private siftUp(index: number) {
-      while (index > 0 && this.data[index] < this.data[this.parent(index)]) {
+      while (index > 0 && this.compair(this.data[index],this.data[this.parent(index)]) ) {
         const parentIndex = this.parent(index);
         this.swap(index, parentIndex);
         index = parentIndex;
@@ -72,11 +74,12 @@ class MaxHeap<T> {
         const rightChildIndex = this.rightChild(index);
         if (
           rightChildIndex < this.size &&
-          this.data[rightChildIndex] < this.data[minValueIndex]
+          this.compair(this.data[rightChildIndex] , this.data[minValueIndex])
+          
         ) {
           minValueIndex = rightChildIndex;
         }
-        if (this.data[index] < this.data[minValueIndex]) {
+        if (this.compair(this.data[index] , this.data[minValueIndex]) ) {
           break;
         }
         this.swap(index, minValueIndex);
@@ -94,4 +97,4 @@ class MaxHeap<T> {
     }
   }
   
-export default MaxHeap;
+export default MinHeap;

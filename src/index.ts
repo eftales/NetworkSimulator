@@ -1,4 +1,4 @@
-import MaxHeap from './heap';
+import MinHeap from './heap';
 import {Simulator} from "./simulator";
 
 /**
@@ -12,7 +12,7 @@ console.log(r1[0]&r2);
 
 console.log("===================测试heap==============");
 let ArrNum:number[] = [];
-let heap = new MaxHeap(ArrNum);
+let heap = new MinHeap((a:number,b:number)=>{return a<b;}, ArrNum);
 
 for(let i=1;i<10;++i){
     heap.add(Math.round(Math.random()*1000));
@@ -27,6 +27,12 @@ while(heap.size!==0){
 console.log("===================测试Event==============");
 
 import {EventEmitter} from "events";
+import { Frame } from './frame';
+
+
+let frame = new Frame();
+console.log(frame)
+
 
 const emitter = new EventEmitter();
 
@@ -76,12 +82,13 @@ console.log(myMap);
 console.log("===================测试Simulator==============");
 let swNum:number = 2;
 let hostNum:number = 2;
-let sim = new Simulator(swNum,hostNum);
+let forwardTime = 5;
+let sim = new Simulator(swNum,forwardTime,hostNum); 
 
 
 /*
     创建拓扑
-    H - SW - H
+    H0 - SW0 - SW1 - H1
 */
 
 sim.link("sw0",0,"h0",0);
@@ -94,3 +101,5 @@ sim.inspect();
 
 
 sim.hostLists[0].sendFlow();
+sim.hostLists[1].sendFlow();
+

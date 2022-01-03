@@ -1,5 +1,7 @@
 import {EventEmitter} from "events";
 import { Frame } from "./frame";
+import { Event } from "./eventbus";
+
 const jStat = require('jstat');
 
 export class Host{
@@ -18,10 +20,19 @@ export class Host{
     sendedDataCount:number = 0;
 
 
-    constructor(deviceName:string, dstMACs:string[],emitter:EventEmitter){
+
+    constructor(deviceName:string, dstMACs:string[],emitter:EventEmitter,arrivalMiu?:number,dataLenMiu?:number){
         this.deviceName = deviceName;
         this.emitter = emitter;
         this.dstMACs = [...dstMACs]; 
+
+        if (typeof arrivalMiu !== "undefined"){
+            this.arrivalMiu = arrivalMiu;
+        }
+
+        if (typeof dataLenMiu !== "undefined"){
+            this.dataLenMiu = dataLenMiu;
+        }
 
         emitter.on(deviceName+"recv",this.recvFlow.bind(this));
 
@@ -35,37 +46,31 @@ export class Host{
         this.peerID = peerID_;
     }
 
-    public recvFlow(frame:Frame){
-        let p = 11;
-        for(let i=0;i<1000;++i){
-            p = Math.random();
-            p += 1;
-        }
-
+    public recvFlow(event:Event){
         // 统计收到报文的大小和数目
-        this.recvedDataLen += frame.dataLen + frame.dst.length + frame.src.length + frame.checkcode.length;
+        this.recvedDataLen += event.frame.dataLen + event.frame.dst.length + event.frame.src.length + event.frame.checkcode.length;
         this.recvedDataCount += 1;
 
-        console.log("[DEBUG] "+Date.now()+" "+this.deviceName+" recvedDataLen = "+this.recvedDataLen+" recvedDataCount = "+this.recvedDataCount);
+        console.log("[DEBUG] "+event.time +" "+this.deviceName+" recvedDataLen = "+this.recvedDataLen+" recvedDataCount = "+this.recvedDataCount);
 
     }
 
     public sendFlow(){
-
         let lambda = 1/this.arrivalMiu;
-        let sendTime = jStat.exponential.sample(lambda);
+        let nextSendTime = jStat.exponential.sample(lambda); // 下一个报文的发送时间
+ 
 
-        setTimeout(this.sendFlow.bind(this),sendTime); // 先异步
+        setTimeout(this.sendFlow.bind(this),nextSendTime); // 先异步
 
         // 再crc
         let dataLen = jStat.exponential.sample(1/this.dataLenMiu);
-        let frame = new Frame(this.deviceName,this.genDst(),this.randNum,dataLen);
-        this.emitter.emit(this.peerID+"recv",frame); // 只能发给交换机，在这里会阻塞
+        let frame = new Frame(this.peerID,this.deviceName,this.genDst(),this.randNum,dataLen);
+        let event:Event = new Event(Date.now(),frame);
+        // console.log(event);
+        this.emitter.emit("EventBusRecv",event); // 因为 emit 是阻塞的，所以用 EventBus 将终端发送和交换机转发解耦
         this.sendedDataLen += dataLen + frame.dst.length + frame.src.length + frame.checkcode.length;
         this.sendedDataCount += 1;
-        // 因为 emit 是阻塞的，所以在数据包被接受|丢弃后，这里才会输出。对事件处理时序没有影响
-
-        console.log("[DEBUG] "+Date.now()+" "+this.deviceName+" sendedDataLen = "+this.sendedDataLen+" sendedDataCount = "+this.sendedDataCount);
+        console.log("[DEBUG] "+event.time+" "+this.deviceName+" sendedDataLen = "+this.sendedDataLen+" sendedDataCount = "+this.sendedDataCount);
 
 
     }

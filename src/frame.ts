@@ -1,4 +1,5 @@
 export class Frame{
+    handler:string; // 处理者
     src:string;
     dst:string;
     dataLen:number;
@@ -6,7 +7,8 @@ export class Frame{
     checkData:number[] = [];
 
 
-    constructor( src:string, dst:string, randNum:number[],dataLen:number){
+    constructor( handler:string="", src:string="", dst:string="", randNum:number[]=[0x00,0x00],dataLen:number=0){
+        this.handler = handler;
         this.src = src;
         this.dst = dst;
         this.dataLen = dataLen;

@@ -1,5 +1,5 @@
 import {EventEmitter} from "events";
-import { Frame } from "./frame";
+import { Event } from "./eventbus";
 
 export class Switch{
     deviceName:string;
@@ -7,10 +7,14 @@ export class Switch{
     peerIDs:string[] = ["","","","","","","",""]; // 交换机固定有 8 个口
     emitter:EventEmitter;
     forwardTable:Map<string,number> = new Map<string,number>();
+    forwardTime:number=5; // 转发耗时默认为 5 ms
 
-    constructor(deviceName:string, emitter:EventEmitter){
+    constructor(deviceName:string, emitter:EventEmitter, forwardTime?:number){
         this.deviceName = deviceName;
         this.emitter = emitter;
+        if (typeof forwardTime !== "undefined"){
+            this.forwardTime = forwardTime;
+        }
         emitter.on(this.deviceName+"recv",this.forward.bind(this));
         
     }
@@ -28,20 +32,21 @@ export class Switch{
     }
 
 
-    public forward(frame:Frame){
-        console.log("[DEBUG] "+Date.now()+" "+this.deviceName+" is forwarding...");
-
-        frame.check(this.randNum);
-        let portID = this.forwardTable.get(frame.dst);
+    public forward(event:Event){
+        console.log("[DEBUG] "+event.time+" "+this.deviceName+" is forwarding...");
+        
+        event.frame.check(this.randNum);
+        let portID = this.forwardTable.get(event.frame.dst);
+        // console.log(this,event);
 
         if(typeof portID !== "undefined" ){
-            this.emitter.emit(this.peerIDs[portID]+"recv",frame)
+            event.time = event.time + this.forwardTime;
+            event.frame.handler = this.peerIDs[portID];
+            this.emitter.emit("EventBusRecv",event);
         }
         else{
             throw("[ERROR] "+this.deviceName+" forwardTable mis.");
         }
 
-
     }
-
 }
