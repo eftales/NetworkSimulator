@@ -1,12 +1,15 @@
 import {EventEmitter} from "events";
 import { Frame } from "./frame";
 import { Event } from "./eventbus";
+import {CRCCaler} from './crc';
 
 const jStat = require('jstat');
 
 export class Host{
+    crcCaler:CRCCaler = new CRCCaler();
+
     deviceName:string;
-    randNum: number[] = [0x11,0x22];
+    randNum: number[] = [0x00,0x00];
     peerID:string = "";
     emitter:EventEmitter;
     dstMACs:string[];
@@ -53,7 +56,7 @@ export class Host{
 
     public recvFlow(event:Event){
         // 统计收到报文的大小和数目
-        this.recvedDataLen += event.frame.dataLen + event.frame.dst.length + event.frame.src.length + event.frame.checkcode.length;
+        this.recvedDataLen += event.frame.dataLen + event.frame.dst.length + event.frame.src.length + 2; // 2 是 checkcode 的长度
         this.recvedDataCount += 1;
 
         console.log("[DEBUG] "+event.time +" "+this.deviceName+" recvedDataLen = "+this.recvedDataLen+" recvedDataCount = "+this.recvedDataCount);
@@ -70,10 +73,12 @@ export class Host{
         // 再crc
         let dataLen = jStat.exponential.sample(1/this.dataLenMiu);
         let frame = new Frame(this.deviceName ,this.peerID,this.deviceName,this.genDst(),this.randNum,dataLen);
+        frame.checkcode = this.crcCaler.compute(frame.checkData,this.randNum);
         let event:Event = new Event(Date.now(),frame);
+
         // console.log(event);
         this.emitter.emit("EventBusRecv",event); // 因为 emit 是阻塞的，所以用 EventBus 将终端发送和交换机转发解耦
-        this.sendedDataLen += dataLen + frame.dst.length + frame.src.length + frame.checkcode.length;
+        this.sendedDataLen += dataLen + frame.dst.length + frame.src.length + 2; // 2 是 checkcode 的长度
         this.sendedDataCount += 1;
         console.log("[DEBUG] "+event.time+" "+this.deviceName+" sendedDataLen = "+this.sendedDataLen+" sendedDataCount = "+this.sendedDataCount);
 

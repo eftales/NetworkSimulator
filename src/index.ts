@@ -2,21 +2,11 @@ import {Simulator} from "./simulator";
 
 console.log("===================测试==============");
 
-const r1:number[] = [0xff,0xff];
-const r2:number = 0x1234;
-console.log(r1[0]&r2);
+import {CRCCaler} from './crc';
 
-let l = [1,2,3,4];
+let crcCaler:CRCCaler = new CRCCaler();
 
-function cl(l:number[]){
-    l[0] = 11;
-}
-
-
-cl(l);
-console.log(l)
-
-
+console.log(crcCaler.compute([0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x21],[1,2]))
 console.log("===================测试Simulator==============");
 let swNum:number = 2;
 let hostNum:number = 2;

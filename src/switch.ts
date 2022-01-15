@@ -1,7 +1,10 @@
 import {EventEmitter} from "events";
 import { Event } from "./eventbus";
+import {CRCCaler} from './crc';
 
 export class Switch{
+    crcCaler:CRCCaler = new CRCCaler();
+
     deviceName:string;
     randNum: number[] = [0x00,0x00];
     peerIDs:string[] = ["","","","","","","",""]; // 交换机固定有 8 个口
@@ -39,7 +42,12 @@ export class Switch{
     public forward(event:Event){
         console.log("[DEBUG] "+event.time+" "+this.deviceName+" is forwarding...");
         
-        event.frame.check(this.randNum);
+        let checkCode = this.crcCaler.compute(event.frame.checkData,this.randNum);
+        if(checkCode!==event.frame.checkcode){
+            console.log("[DEBUG] "+event.time+" "+this.deviceName+" drop a frame. Messages are as follows:",event)
+            return;
+
+        }
         let portID = this.forwardTable.get(event.frame.dst);
         // console.log(this,event);
 

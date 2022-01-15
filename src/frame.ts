@@ -4,7 +4,7 @@ export class Frame{
     src:string;
     dst:string;
     dataLen:number;
-    checkcode:number[] = [0x00,0x00];
+    checkcode:number = 0;
     checkData:number[] = [];
 
     loc:number[] = [0,0];
@@ -31,9 +31,6 @@ export class Frame{
         mac.forEach(element => {
             this.checkData.push(element);
         });
-
-
-        this.check(randNum);
         
     }
 
@@ -52,8 +49,5 @@ export class Frame{
         return mac;
     }
 
-    public check(randNum:number[]){
-        this.checkcode = [0x11,0x22];
-    }
 
 }
