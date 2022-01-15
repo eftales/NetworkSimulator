@@ -70,7 +70,11 @@ export class Simulator{
 
         this.hostLists.forEach(host => {
             host.dstMACs = [...this.dstMAcs];
-            host.sendFlow();
+            let frame = new Frame();
+            frame.handler = host.deviceName;
+            frame.preHandler = host.deviceName;
+            let event = new Event(Date.now(),frame);
+            this.emitter.emit(host.deviceName+"send",event); 
         });
 
 

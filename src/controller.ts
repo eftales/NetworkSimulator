@@ -37,8 +37,7 @@ export class Controller{
 
     public updateHostRandNum(event:Event){
         console.log(this);
-        let time = Date.now();
-        console.log("[DEBUG] "+time+" "+this.deviceName+" is updating host randNum...");
+        console.log("[DEBUG] "+event.time+" "+this.deviceName+" is updating host randNum...");
         // 预测网络最大流，生成新的随机码
 
         this.randNumHost[0] += 1;
@@ -59,8 +58,8 @@ export class Controller{
     }
 
     public updateSwitchRandNum(event:Event){
-        let time = Date.now();
-        console.log("[DEBUG] "+time+" "+this.deviceName+" is updating sw randNum...");
+
+        console.log("[DEBUG] "+event.time+" "+this.deviceName+" is updating sw randNum...");
 
         // 更新sw随机码
         this.randNumSwitch = [...this.randNumHost]; // 避免相互影响

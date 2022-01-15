@@ -9,7 +9,7 @@ export default class PacketRender{
     ctx:CanvasRenderingContext2D;
 
     static MaxRenderStep = 10;
-    static RenderTime = 1;
+    static RenderTime = 100;
     static RenderGap = 10;
 
     static PacketHigh = 10;

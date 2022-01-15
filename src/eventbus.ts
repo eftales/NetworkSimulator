@@ -64,16 +64,16 @@ export class EventBus{
                     setTimeout(this.dispatch.bind(this),PacketRender.RenderGap);// TODO:这里的时间需要好好设置一下
                 }
                 else{
-                    // 渲染完成，进行转发操作
-                    this.emitter.emit(event.frame.handler+"recv",event); // 因为这里是阻塞执行的，所以当返回时交换机一定完成了转发
-                    if(event.frame.handler.search(deviceTypes.typeSwitch)){
-                        // 因为交换机有转发时延，为保证时序正确，必须在交换机转发后睡眠 forwardTime 这么长的时间
-                        setTimeout(this.dispatch.bind(this),this.forwardTime); // TODO:这里的时间需要好好设置一下
+                    // 渲染完成，进行转发操作 | 处理 host 预约的发送事件
+                    if(event.frame.handler===event.frame.preHandler){
+                        // host 预约的发送事件
+                        this.emitter.emit(event.frame.handler+"send",event);
                     }
                     else{
-                        // 终端则可以直接苏醒，因为终端发送报文没有时延
-                        setTimeout(this.dispatch.bind(this),0);// 放弃时间片，让交换机进行处理
+                        // 包转发事件
+                        this.emitter.emit(event.frame.handler+"recv",event); // 因为这里是阻塞执行的，所以当返回时交换机一定完成了转发
                     }
+
                 }
 
 
@@ -81,7 +81,6 @@ export class EventBus{
             }
             else if(event.frame.handler==="controller"){
                 this.emitter.emit(event.frame.preHandler,event);
-                setTimeout(this.dispatch.bind(this),0);//
 
             }
             
@@ -93,11 +92,11 @@ export class EventBus{
         }
         else{
             // 堆栈中没有事件或事件尚未发生，继续等待
-            console.log("堆栈中没有事件或事件尚未发生，继续等待");
-            setTimeout(this.dispatch.bind(this),this.forwardTime);
+            // console.log("堆栈中没有事件或事件尚未发生，继续等待");
+
         }
 
-        
+        setTimeout(this.dispatch.bind(this),5);//放弃时间片
 
     }
 

@@ -2,6 +2,7 @@ import {EventEmitter} from "events";
 import { Frame } from "./frame";
 import { Event } from "./eventbus";
 import {CRCCaler} from './crc';
+import PacketRender from "./packetrender";
 
 const jStat = require('jstat');
 
@@ -42,7 +43,7 @@ export class Host{
         }
 
         emitter.on(deviceName+"recv",this.recvFlow.bind(this));
-
+        emitter.on(deviceName+"send",this.sendFlow.bind(this));
     }
 
 
@@ -63,19 +64,25 @@ export class Host{
 
     }
 
-    public sendFlow(){
+    public sendFlow(event_:Event){
+        // 向 eventbus 预约一个事件
         let lambda = 1/this.arrivalMiu;
         let nextSendTime = jStat.exponential.sample(lambda); // 下一个报文的发送时间
- 
+        let frameNew = new Frame();
+        frameNew.handler = this.deviceName;
+        frameNew.preHandler = this.deviceName;
+        frameNew.renderStep=PacketRender.MaxRenderStep+1;
+        let eventNew = new Event(event_.time+nextSendTime,frameNew);
+        this.emitter.emit("EventBusRecv",eventNew); // 因为 emit 是阻塞的，所以用 EventBus 将终端发送和交换机转发解耦 
 
-        setTimeout(this.sendFlow.bind(this),nextSendTime); // 先异步
 
-        // 再crc
+
+        // 生成本次要发送的数据
         let dataLen = jStat.exponential.sample(1/this.dataLenMiu);
         let frame = new Frame(this.deviceName ,this.peerID,this.deviceName,this.genDst(),dataLen);
         frame.checkcode = this.crcCaler.compute(frame.checkData,this.randNum);
         console.log("host randnum is ",this.randNum);
-        let event:Event = new Event(Date.now(),frame);
+        let event:Event = new Event(event_.time,frame);
 
         // console.log(event);
         this.emitter.emit("EventBusRecv",event); // 因为 emit 是阻塞的，所以用 EventBus 将终端发送和交换机转发解耦
