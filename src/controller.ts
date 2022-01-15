@@ -36,7 +36,7 @@ export class Controller{
     }
 
     public updateHostRandNum(event:Event){
-        console.log(this);
+        // console.log(this);
         console.log("[DEBUG] "+event.time+" "+this.deviceName+" is updating host randNum...");
         // 预测网络最大流，生成新的随机码
 

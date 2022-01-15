@@ -10,7 +10,7 @@ export class Switch{
     peerIDs:string[] = ["","","","","","","",""]; // 交换机固定有 8 个口
     emitter:EventEmitter;
     forwardTable:Map<string,number> = new Map<string,number>();
-    forwardTime:number=5; // 转发耗时默认为 5 ms
+    forwardTime:number=0; // 转发耗时默认为 0 ms
 
     loc:number[] = [0,0];
 
@@ -48,7 +48,9 @@ export class Switch{
             console.log(event);
             console.log("sw randnum is ",this.randNum);
             console.log("sw check result is ",checkCode);
-
+            event.frame.renderStep = -1; // 使能渲染
+            event.frame.checkcode = -1;
+            this.emitter.emit("EventBusRecv",event);
             return;
 
         }

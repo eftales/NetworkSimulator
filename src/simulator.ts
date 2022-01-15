@@ -36,7 +36,7 @@ export class Simulator{
     updatePeriod:number;
     swUpdateDelay:number;
 
-    constructor(forwardTime:number=5, arrivalMiu:number=1000,dataLenMiu:number=100, updatePeriod:number=5*1000,swUpdateDelay:number=500){
+    constructor(forwardTime:number=0, arrivalMiu:number=1000,dataLenMiu:number=100, updatePeriod:number=5*1000,swUpdateDelay:number=500){
         document.getElementById("startButton")!.onclick = this.startSim.bind(this);
         this.forwardTime = forwardTime;
         this.arrivalMiu = arrivalMiu;

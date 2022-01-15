@@ -20,6 +20,7 @@ export default class PacketRender{
         this.sim = sim; // 在 sim 中获取设备的位置信息
         this.canvas = <HTMLCanvasElement> document.getElementById('packet'); // typecast
         this.ctx = this.canvas.getContext('2d')!; // ! 排除 null 和 undefined
+        this.ctx.fillStyle = "green";
 
         sim.emitter.on("PacketRender",this.render.bind(this));
     }
@@ -33,6 +34,26 @@ export default class PacketRender{
 
     public render(event:Event){
         // console.log("[DEBUG] Rendering...");
+
+        if(event.frame.checkcode<0){
+            // 这是一个校验错误的报文，高亮为红色后删除
+            this.ctx.fillStyle = "red";
+            this.ctx.fillRect(event.frame.loc[0],event.frame.loc[1],PacketRender.PacketWidth,PacketRender.PacketHigh);
+            this.ctx.fillStyle = "green";
+
+            if(event.frame.renderStep === 1){
+                let safeRange = 5;
+                this.ctx.clearRect(event.frame.loc[0]-safeRange,event.frame.loc[1]-safeRange,PacketRender.PacketWidth+2*safeRange,PacketRender.PacketHigh+2*safeRange);
+            }
+            else{
+                event.frame.renderStep = 1;
+                event.time += PacketRender.RenderTime; // TODO:这里的时间需要好好设置一下
+                this.sim.emitter.emit("EventBusRecv",event);
+            }
+
+            return;
+        }
+
         if(event.frame.renderStep<0){
             // 填写 renderStep renderRate loc
             event.frame.loc = this.getCenterPoint(event.frame.preHandler);
@@ -47,8 +68,9 @@ export default class PacketRender{
             this.ctx.clearRect(event.frame.loc[0]-safeRange,event.frame.loc[1]-safeRange,PacketRender.PacketWidth+2*safeRange,PacketRender.PacketHigh+2*safeRange);
             event.frame.loc[0] += event.frame.renderRate[0];
             event.frame.loc[1] += event.frame.renderRate[1];
-            this.ctx.strokeRect(event.frame.loc[0],event.frame.loc[1],PacketRender.PacketWidth,PacketRender.PacketHigh);
+            this.ctx.fillRect(event.frame.loc[0],event.frame.loc[1],PacketRender.PacketWidth,PacketRender.PacketHigh);
             event.frame.renderStep += 1;
+            event.time += PacketRender.RenderTime; // TODO:这里的时间需要好好设置一下
         }
         else{
             // 清除痕迹
@@ -57,7 +79,7 @@ export default class PacketRender{
             event.frame.renderStep += 1;
         }
 
-        event.time += PacketRender.RenderTime; // TODO:这里的时间需要好好设置一下
+        
         
 
         this.sim.emitter.emit("EventBusRecv",event);

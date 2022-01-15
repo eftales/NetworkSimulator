@@ -81,7 +81,7 @@ export class Host{
         let dataLen = jStat.exponential.sample(1/this.dataLenMiu);
         let frame = new Frame(this.deviceName ,this.peerID,this.deviceName,this.genDst(),dataLen);
         frame.checkcode = this.crcCaler.compute(frame.checkData,this.randNum);
-        console.log("host randnum is ",this.randNum);
+        // console.log("host randnum is ",this.randNum);
         let event:Event = new Event(event_.time,frame);
 
         // console.log(event);
