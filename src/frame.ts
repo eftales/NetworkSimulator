@@ -12,7 +12,7 @@ export class Frame{
     renderStep:number = -1;
 
 
-    constructor( preHandler:string="",handler:string="", src:string="", dst:string="", randNum:number[]=[0x00,0x00],dataLen:number=0){
+    constructor( preHandler:string="",handler:string="", src:string="", dst:string="", dataLen:number=0){
         this.preHandler = preHandler;
         this.handler = handler;
         this.src = src;

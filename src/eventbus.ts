@@ -54,9 +54,9 @@ export class EventBus{
 
     public dispatch(){
         // console.log("[DEBUG] " +this.deviceName+" is dispatch...");
-        if(this.heap.size != 0){
+        
+        if(this.heap.size != 0 && (this.heap.peek().time<=Date.now()) ){
             let event = this.heap.pop();
-
             if(this.set.has(event.frame.handler)){
                 if(event.frame.renderStep<=PacketRender.MaxRenderStep){
                     // 具体的渲染工作交给 PacketRender 来做
@@ -79,12 +79,21 @@ export class EventBus{
 
         
             }
+            else if(event.frame.handler==="controller"){
+                this.emitter.emit(event.frame.preHandler,event);
+                setTimeout(this.dispatch.bind(this),0);//
+
+            }
+            
             else{
+                
                 throw("[ERROR] "+this.deviceName+" handler mis. "+event.frame.handler);
+                
             }
         }
         else{
-            // 堆栈中没有事件，继续等待
+            // 堆栈中没有事件或事件尚未发生，继续等待
+            console.log("堆栈中没有事件或事件尚未发生，继续等待");
             setTimeout(this.dispatch.bind(this),this.forwardTime);
         }
 

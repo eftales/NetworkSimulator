@@ -3,7 +3,10 @@ import {Host} from './host';
 
 import {EventEmitter} from "events";
 import { EventBus } from './eventbus';
+import { Event } from "./eventbus";
 import { CanvasTopo } from './CanvasTopo';
+import { Controller } from './controller';
+import { Frame } from './frame';
 
 
 export enum deviceTypes {
@@ -18,6 +21,7 @@ export class Simulator{
     canvasTopo:CanvasTopo;
     swLists:Switch[] = [];
     hostLists:Host[] = [];
+    controller:Controller;
     set = new Set<string>();
     eventBus:any = null; 
 
@@ -29,14 +33,19 @@ export class Simulator{
     arrivalMiu:number; // 1/指数分布参数，等价于到达时间间隔的期望
     dataLenMiu:number; // 1/指数分布参数，等价于平均包长度
     dstMAcs:string[] = [];
+    updatePeriod:number;
+    swUpdateDelay:number;
 
-
-    constructor(swNum:number, forwardTime:number=5, hostNum:number,arrivalMiu:number=1000,dataLenMiu:number=100){
+    constructor(forwardTime:number=5, arrivalMiu:number=1000,dataLenMiu:number=100, updatePeriod:number=5*1000,swUpdateDelay:number=500){
         document.getElementById("startButton")!.onclick = this.startSim.bind(this);
         this.forwardTime = forwardTime;
         this.arrivalMiu = arrivalMiu;
         this.dataLenMiu = dataLenMiu; 
+        this.updatePeriod = updatePeriod;
+        this.swUpdateDelay = swUpdateDelay;
         this.canvasTopo = new CanvasTopo(this);         
+
+        this.controller = new Controller("controller",this.emitter,this.swLists,this.hostLists,this.updatePeriod,this.swUpdateDelay);
 
     };
 
@@ -65,6 +74,14 @@ export class Simulator{
         });
 
 
+        this.controller.swLists = this.swLists;
+        this.controller.hostLists = this.hostLists;
+
+        let frame = new Frame();
+        frame.handler = "controller";
+        frame.preHandler = "controllerupdateHostRandNum";
+        let event = new Event(Date.now()+this.updatePeriod,frame);
+        this.emitter.emit(frame.preHandler,event); 
 
     }
 

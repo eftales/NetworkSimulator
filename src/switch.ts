@@ -44,7 +44,11 @@ export class Switch{
         
         let checkCode = this.crcCaler.compute(event.frame.checkData,this.randNum);
         if(checkCode!==event.frame.checkcode){
-            console.log("[DEBUG] "+event.time+" "+this.deviceName+" drop a frame. Messages are as follows:",event)
+            console.log("[DEBUG] "+event.time+" "+this.deviceName+" drop a frame. Messages are as follows:");
+            console.log(event);
+            console.log("sw randnum is ",this.randNum);
+            console.log("sw check result is ",checkCode);
+
             return;
 
         }
