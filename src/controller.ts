@@ -15,6 +15,9 @@ export class Controller{
     deviceName:string;
     swLists:Switch[];
     hostLists:Host[];
+    dropRateElm:HTMLInputElement;
+    recved:number=0;
+    sended:number=0;
 
 
     constructor(deviceName:string,emitter:EventEmitter, swLists:Switch[], hostLists:Host[],updatePeriod:number=5*1000,swUpdateDelay:number=500){
@@ -24,6 +27,8 @@ export class Controller{
         this.emitter = emitter;
         this.updatePeriod = updatePeriod;
 
+        this.dropRateElm = <HTMLInputElement>document.getElementById('dropRate'); // typecast
+        this.dropRateElm.value = 0+'%';
 
         if (typeof swUpdateDelay !== "undefined"){
             this.swUpdateDelay = swUpdateDelay;
@@ -35,11 +40,26 @@ export class Controller{
         this.emitter.on(this.deviceName+"updateHostRandNum",this.updateHostRandNum.bind(this));
     }
 
+    private calDropRate(){
+        let curRecved = 0;
+        let curSended = 0;
+        this.hostLists.forEach(host => {
+            curRecved += host.recvedDataCount;
+            curSended += host.sendedDataCount;
+        });
+        let recvedDt = curRecved - this.recved;
+        let sendedDt = curSended - this.sended;
+        let dropRate = 1 - (recvedDt/sendedDt);
+        this.dropRateElm.value = dropRate*100 + '%';
+        this.recved = curRecved;
+        this.sended = curSended;
+    }
+
     public updateHostRandNum(event:Event){
         // console.log(this);
         console.log("[DEBUG] "+event.time+" "+this.deviceName+" is updating host randNum...");
-        // 预测网络最大流，生成新的随机码
-
+        // TODO:预测网络最大流，生成新的随机码
+        this.calDropRate();
         this.randNumHost[0] += 1;
 
         // 更新host终端随机码

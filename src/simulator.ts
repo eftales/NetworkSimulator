@@ -29,7 +29,7 @@ export class Simulator{
     hostNum:number = 0;
 
 
-    forwardTime:number; // 转发耗时默认为 5 ms
+    forwardTime:number; // 转发耗时默认为 0 ms
     arrivalMiu:number; // 1/指数分布参数，等价于到达时间间隔的期望
     dataLenMiu:number; // 1/指数分布参数，等价于平均包长度
     dstMAcs:string[] = [];
